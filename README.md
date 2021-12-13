@@ -1,1 +1,1 @@
-I use the notebook to do the experiments since calculations are fast enough to run in seconds.
+The file Run.py does the work right now. There are some issues with the run time. I can not build graphs of size 2^16 with connecting radius 0.9, since memory consumption is too high (>60gb for one graph).
