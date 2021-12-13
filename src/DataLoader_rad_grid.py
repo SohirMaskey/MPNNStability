@@ -44,6 +44,13 @@ class RGGDataset_grid(Dataset):
         return [f'graph_r{int(self.radius*10)}_{int(i*self.skip)}.pt' for i in range(1, self.number)]
     
     def download_grid(self):
+        """
+        1. build a uniform 2^size x 2^size grid of [0,1]^2
+        2. For every pixel sample one point uniformly in it, leading to (2^size)^2 point (=point list)
+        3. Sample randomly 2^1, 2^2, 2^3,.., 2^15 by choosing randomly indices from the point list.
+        3. append everything to a list and save it in /self.root/raw
+        """
+        
         if osp.isfile(self.root + '/raw/grid_positions_{self.size}_{self.skip}.pt'):
             print('grid positions are already downloaded')
             pass
@@ -66,7 +73,7 @@ class RGGDataset_grid(Dataset):
         
         for i in our_range:
             p = torch.ones(len(pos))*1/len(pos)
-            idx = p.multinomial(num_samples=i, replacement=False)
+            idx = p.multinomial(num_samples=i, replacement=False) #samples randomly i indices of the list.
             b = pos[idx]
             positions.append([b, idx])
         positions.append([pos, torch.range(0,self.size**2)])
@@ -107,6 +114,10 @@ class RGGDataset_grid(Dataset):
     """    
     def process_grid(self): 
         positions = torch.load(osp.join(self.raw_dir, f'grid_positions_{self.size}.pt'))
+        
+        """
+        build graphs with the positions we get from download_grid()
+        """
         
         for i in range(1,(2*self.n)+1):
             start = time.time()
