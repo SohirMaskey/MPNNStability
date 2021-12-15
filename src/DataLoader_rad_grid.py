@@ -133,6 +133,28 @@ class RGGDataset_grid(Dataset):
             #nx.draw(to_networkx(graph))    
             end = time.time()
             print(f"{i}: Took {(end-start)* 1000.0:.3f} ms")
+            
+    def process_grid_big(self): 
+        positions = torch.load(osp.join(self.raw_dir, f'grid_positions_{self.size}.pt'))
+        
+        """
+        build graphs with the positions we get from download_grid()
+        """
+        
+        for i in range((2*self.n),(2*self.n)+1):
+            start = time.time()
+            #print(i)
+            #print(len(positions[i-1][0]))
+            batch = torch.zeros(int(2**i)).type(torch.LongTensor)
+            edge_index = radius_graph(positions[i-1][0], r=self.radius, batch=batch, loop=False, max_num_neighbors=(self.size**2))
+            graph  = Data(edge_index = edge_index)
+            #graphs.append(graph)
+            torch.save(graph, 
+                os.path.join(self.processed_dir, 
+                    f'graph_r{int(self.radius*10)}_{2**i}nodes.pt'))
+            #nx.draw(to_networkx(graph))    
+            end = time.time()
+            print(f"{i}: Took {(end-start)* 1000.0:.3f} ms")
     
 
     def process(self): 
@@ -161,6 +183,8 @@ class RGGDataset_grid(Dataset):
     
     
 if __name__=='__main__':
-    DL = RGGDataset_grid(root = '../../input_rad', radius= 0.9,size = 8)
-    #DL.download_grid()
-    DL.process_grid()
+    DL = RGGDataset_grid(root = '../../input_rad',size = 7)
+    DL.download_grid()
+    #DL.process_grid()
+   
+

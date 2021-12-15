@@ -37,12 +37,12 @@ DL = RGGDataset_grid(root = '../../input_rad')
 dataset = DL.get(1,2**5)
 
 #load the positions, list of positions for all graphs
-positions = torch.load('../../input_rad/raw/grid_positions_256.pt')
+positions = torch.load('../../input_rad/raw/grid_positions_128.pt')
 
 model = GCN()
 model.load_state_dict(torch.load( '../models/GCNTwoLayersGraphSage'))
 
-N = 16
+N = 14
 
 def error_fct(radius, signal):
     """
@@ -77,22 +77,22 @@ def error_fct(radius, signal):
 errs = [ ]
 #low_pass = lambda x:  (1+(torch.tensor(x[:,0]**2 + x[:,1]**2))).pow_(-1)
 low_pass = lambda x:  x[:,0]*x[:,1]
-#y = torch.randn(2**N,1)
+y = torch.randn(2**N,1)
 
-cdata = DL.get(1,2**N)
-cpos = positions[-1]
-signal = low_pass(cpos[0])
-signal = torch.reshape(signal,( len(signal),1))
+#cdata = DL.get(1,2**N)
+#cpos = positions[-1]
+#signal = low_pass(cpos[0])
+#signal = torch.reshape(signal,( len(signal),1))
 #cdata.x = y 
-#signal = y
+signal = y
 
-for i in [1,5]:
+for i in [1,5,9]:
     errs.append(error_fct(i, signal))
     
-with open('../output/MultSignalGraphSage2MLP' + str(2**16) + 'Nodes' + '.pickle', 'wb') as output:
+with open('../output/RandnSignalGraphSage2MLP' + str(2**14) + 'Nodes' + '.pickle', 'wb') as output:
     pickle.dump(errs, output)
     
-xAxis = [2**n for n in range(1,16)]
+xAxis = [2**n for n in range(1,14)]
 fig = plt.figure()
 plt.xlabel('Nodes')
 plt.ylabel('l2error')
@@ -101,24 +101,24 @@ plt.yscale('log')
 #plt.figtext(0.5, 1, txt, wrap=True, horizontalalignment='center', fontsize=15)
 plt.plot(xAxis,errs[0],label='0.1')
 plt.plot(xAxis,errs[1], label='0.5')
-#plt.plot(xAxis,errs[2],label='0.9')
+plt.plot(xAxis,errs[2],label='0.9')
 plt.legend()
-fig.savefig('../output/MultSignalGraphSage2MLPl2Error' + str(2**16) + 'Nodes.png', dpi=fig.dpi)
+fig.savefig('../output/RandnSignalGraphSage2MLPl2Error' + str(2**14) + 'Nodes.png', dpi=fig.dpi)
 
 
 slope0, intercept0 = np.polyfit(np.log(xAxis), np.log(errs[0]), 1)
 slope1, intercept1 = np.polyfit(np.log(xAxis), np.log(errs[1]), 1)
-#slope2, intercept2 = np.polyfit(np.log(xAxis), np.log(errs[2]), 1)
+slope2, intercept2 = np.polyfit(np.log(xAxis), np.log(errs[2]), 1)
 
 
 #txt="radius: " + str((radius)/10) + "  |  slope: " + str(slope)
 #plt.figtext(0.5, 1, txt, wrap=True, horizontalalignment='center', fontsize=15)
 plt.loglog(xAxis[:],errs[0], '--', label = '0.1 | slope: ' + str(slope0))
 plt.loglog(xAxis[:],errs[1], '--', label = '0.5 | slope: ' + str(slope1))           
-#plt.loglog(xAxis[:],errs[2], '--', label = '0.9 | slope: ' + str(slope2))           
+plt.loglog(xAxis[:],errs[2], '--', label = '0.9 | slope: ' + str(slope2))           
 plt.legend()
 
-fig.savefig('../output/MultSignalGraphSage2MLPLogl2Error' + str(2**16) + 'Nodes.png', dpi=fig.dpi)
+fig.savefig('../output/RandnSignalGraphSage2MLPLogl2Error' + str(2**14) + 'Nodes.png', dpi=fig.dpi)
 
 
     

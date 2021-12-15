@@ -3,4 +3,4 @@
 eval "$(conda shell.bash hook)"
 cd src
 conda activate pyg_cuda102
-python Run.py
+python RunRandomBandlimited_Epochs.py
