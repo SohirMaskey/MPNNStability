@@ -1,27 +1,24 @@
 """
 I want to add some helper functions
 """
+import sys
+sys.path.insert(1,'../src')
+import time
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch_geometric.data import Data
-import time
-
 from torch_geometric.nn import SAGEConv
-
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
-import torch.nn.functional as F
+from torch_geometric.utils import to_networkx
+import networkx as nx
 
-import sys
-sys.path.insert(1,'../src')
 from DataLoader_rad import RGGDataset_rad
 
 #Visualization
 
-from torch_geometric.utils import to_networkx
-
-import networkx as nx
 
 
 def draw_graph(graph, color, pos):

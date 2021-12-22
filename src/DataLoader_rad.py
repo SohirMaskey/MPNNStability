@@ -1,17 +1,18 @@
+import time
+import random
+import os #to save data
+import os.path as osp #to open data 
+import sys
+sys.path.insert(1,'../src')
+
 import numpy as np
 import torch
 from torch_cluster import radius_graph #to build random geometric graphs, given the positions in 2D and the radius
 from torch_geometric.data import Data #build Data objects in pytorch
-import time
-
-
-import random
-
-import os.path as osp #to open data 
-
 from torch_geometric.data import Dataset, download_url
 
-import os #to save data
+from Settings import radiussteps, num_nodes, datapath
+
 
 class RGGDataset_rad(Dataset):
     
@@ -31,20 +32,20 @@ class RGGDataset_rad(Dataset):
         self.skip = skip
         self.root = root
         self.radius = radius
-        self.number = int(self.size/self.skip)
+        self.number = round(self.size/self.skip)
     
     
     @property
     def raw_file_names(self):
         """ If this file exists in raw_dir, the download is not triggered."""
         
-        return [f'graph_r{int(radius*10)}_{int(i*self.skip)}.pt' for i in range(1,self.number)]
+        return [f'graph_r{round(radius * radiussteps)}_{round(i * self.skip)}.pt' for i in range(1, self.number)]
     
     @property
     def processed_file_names(self):
         """ If these files are found in processed_dir, processing is skipped"""
         
-        return [f'graph_r{int(self.radius*10)}_{int(i*self.skip)}.pt' for i in range(1, self.number)]
+        return [f'graph_r{round(self.radius * radiussteps)}_{round(i * self.skip)}.pt' for i in range(1, self.number)]
     
     def download(self):
         """
@@ -57,14 +58,14 @@ class RGGDataset_rad(Dataset):
             print('already downloaded')
             pass
         #we dont really download anything graph_signal_10001.pickle
-        pos = torch.rand(self.size,2)
+        pos = torch.rand(self.size, 2)
         positions = [ ]
-        for i in range(self.skip,self.size,self.skip):
-            p = torch.ones(len(pos))*1/len(pos)
+        for i in range(self.skip, self.size, self.skip):
+            p = torch.ones(len(pos)) * 1/len(pos)
             idx = p.multinomial(num_samples=i, replacement=False)
             b = pos[idx]
             positions.append([b, idx])
-        positions.append([pos, torch.range(0,self.size-1)])
+        positions.append([pos, torch.range(0, self.size-1)])
         torch.save(positions, 
             os.path.join(self.raw_dir, 
                 f'positions_{self.size}_{self.skip}.pt'))
@@ -83,17 +84,17 @@ class RGGDataset_rad(Dataset):
         """
         
         positions = torch.load(osp.join(self.raw_dir, f'positions_{self.size}_{self.skip}.pt'))
-        
-        for i in range(1,self.number+1):
-            print(i)
-            print(len(positions[i-1][0]))
+        for i in range(1, self.number+1):
+            #print(i)
+            #print(len(positions[i-1][0]))
+            print(round(self.radius * radiussteps))
             batch = torch.zeros(int(i*self.skip)).type(torch.LongTensor)
             edge_index = radius_graph(positions[i-1][0], r=self.radius, batch=batch, loop=False)
             graph  = Data(edge_index = edge_index)
             #graphs.append(graph)
             torch.save(graph, 
                 os.path.join(self.processed_dir, 
-                    f'graph_r{int(self.radius*10)}_{int(i*self.skip)}.pt'))
+                    f'graph_r{round(self.radius * radiussteps)}_{round(i * self.skip)}.pt'))
             #nx.draw(to_networkx(graph))
             
     def len(self):
@@ -111,6 +112,14 @@ class RGGDataset_rad(Dataset):
     
     
 if __name__=='__main__':
-    DL = RGGDataset(root = '//home/groups/ai/maskey/input_rad')
-    #DL.download()
+    """
+    DL = RGGDataset_rad(root = "../input/input_rad")
+    DL.download()
     DL.process()
+    """
+    
+    for i in range(radiussteps):
+        DL = RGGDataset_rad(root = datapath, size = num_nodes, skip = 400, radius = (i+1)/radiussteps)
+        #DL.download()
+        DL.process()
+    

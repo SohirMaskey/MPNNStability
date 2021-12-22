@@ -4,36 +4,31 @@ We created a dataset with graphs of size 2^1,2^2,..,2^15,2^16. This data set is 
 Then, we use the finest graph(size 2^16) as the continuous limit object and calculate graph wise l^2 errors with some graph signal. 
 
 """
-
-import numpy as np
-import torch
-from torch_geometric.data import Data #for constructing data/graph objects from the sample points
+import sys
+sys.path.insert(1,'../src')
+import os
+import os.path as osp
 import time
-
 import random
 
-import matplotlib.pyplot as plt
 
+import numpy as np
+import matplotlib.pyplot as plt
+import torch
+import torch.nn.functional as F
+from torch_geometric.data import Data #for constructing data/graph objects from the sample points
 from torch_geometric.nn import SAGEConv #used for the model construction
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
-import torch.nn.functional as F
+from torch_geometric.data import Dataset, download_url
+import pickle #for saving
 
-import sys
-sys.path.insert(1,'../src')
+
 from DataLoader_rad_grid import RGGDataset_grid #This is the class to load data
 from TwoLayerGraphSage import GCN #This is our MPNN
 
-import os.path as osp
-
-from torch_geometric.data import Dataset, download_url
-
-import os
-
-import pickle #for saving
-
 #load the positions, list of positions for all graphs
-positions = torch.load('../../input_rad/raw/grid_positions_128.pt')
+positions = torch.load('../input/input_rad/raw/grid_positions_128.pt')
 
 model = GCN()
 model.load_state_dict(torch.load( '../models/GCNTwoLayersGraphSage'))
@@ -48,12 +43,12 @@ def error_fct(radius, signal):
     Calculates for a given radius and signal the error between the coarser graphs and finest graph
     
     """
-    DL = RGGDataset_grid(root = '../../input_rad', radius= radius/10,size = 7)
+    DL = RGGDataset_grid(root = '../input/input_rad', radius= radius/10,size = 7)
     DL.process_grid()
     
     L2Errors = []
 
-    cdata = DL.get(radius,2**N)
+    cdata = DL.get(radius, 2**N)
     cpos = positions[-1]
 
     cdata.x = signal 
@@ -65,11 +60,11 @@ def error_fct(radius, signal):
         data = DL.get(radius, 2**i) 
         pos = positions[i-1]
         signal = cdata.x[pos[1].type(torch.LongTensor)]
-        signal = torch.reshape(signal,( len(signal),1))
+        signal = torch.reshape(signal, (len(signal), 1))
         data.x = signal # + (0.01**0.5)*torch.randn(len(signal),1) #random noise
 
         nodeErrors = output[pos[1].type(torch.LongTensor)] - model.forward(data)
-        L2Error = torch.sqrt(1/len(nodeErrors)*torch.sum(torch.pow(nodeErrors,2)))
+        L2Error = torch.sqrt(1/len(nodeErrors) * torch.sum(torch.pow(nodeErrors,2)))
         L2Errors.append(L2Error)
 
     err = [x.detach().numpy() for x in L2Errors]
@@ -86,7 +81,7 @@ low_pass = lambda x:  x[:,0]*x[:,1] #the signal
 #cdata = DL.get(1,2**N)
 cpos = positions[-1]
 signal = low_pass(cpos[0])
-signal = torch.reshape(signal,( len(signal),1))
+signal = torch.reshape(signal, ( len(signal),1))
 #cdata.x = y 
 #signal = y
 
@@ -126,13 +121,13 @@ slope2, intercept2 = np.polyfit(np.log(xAxis), np.log(errs[2]), 1)
 
 
 
-xAxis = [2**n for n in range(1,N)]
+xAxis = [2**n for n in range(1, N)]
 fig = plt.figure()
 #plt.xlabel('Nodes')
 plt.ylabel('loglog')
 #txt="radius: " + str((radius)/10)
 #plt.figtext(0.5, 1, txt, wrap=True, horizontalalignment='center', fontsize=15)
-#txt="radius: " + str((radius)/10) + "  |  slope: " + str(slope)
+#txt="radius: " + str((radius)/10) + "  |  slope: " + str(slope)p
 #plt.figtext(0.5, 1, txt, wrap=True, horizontalalignment='center', fontsize=15)
 plt.loglog(xAxis[:],errs[0], '--', label = '0.1 | slope: ' + str(slope0))
 plt.loglog(xAxis[:],errs[1], '--', label = '0.5 | slope: ' + str(slope1))           

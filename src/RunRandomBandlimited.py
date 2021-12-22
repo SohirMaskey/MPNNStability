@@ -6,39 +6,34 @@ Then, we use the finest graph(size 2^16) as the continuous limit object and calc
 
 """
 
+import os
+import os.path as osp
+import sys
+sys.path.insert(1,'../src')
+import time
+import random
+
 import numpy as np
 import networkx as nx
 import torch
+import torch.nn.functional as F
 from torch_geometric.data import Data
-import time
-
-import random
+from torch_geometric.data import Dataset, download_url
 from torch_geometric.utils import from_networkx
-
+from torch_geometric.nn import SAGEConv
+from torch_geometric.nn import MessagePassing
+from torch_geometric.utils import add_self_loops, degree
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator
 
-from torch_geometric.nn import SAGEConv
-
-from torch_geometric.nn import MessagePassing
-from torch_geometric.utils import add_self_loops, degree
-import torch.nn.functional as F
-
-import sys
-sys.path.insert(1,'../src')
 from DataLoader_rad_grid import RGGDataset_grid
 from TwoLayerGraphSage import GCN, cGCN
 from Utils import *
-
-import os.path as osp
-
-from torch_geometric.data import Dataset, download_url
+from Settings import importpath
 
 
-import os
-
-DL = RGGDataset_grid(root = '../../input_rad')
+DL = RGGDataset_grid(root = importpath)
 
 dataset = DL.get(1,2**5)
 
